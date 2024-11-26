@@ -1,61 +1,116 @@
-# DegenToken (DGN)
+# DegenToken
 
-A Solidity smart contract implementing an ERC-20 token with a marketplace for purchasing items.
+DegenToken is a custom ERC20 token implemented using Solidity. It incorporates features such as token minting, burning, transfer, and redemption for marketplace rewards. Built on OpenZeppelin's standard libraries, the token is designed with custom functionalities suitable for marketplaces or gamified ecosystems.
 
 ## Features
 
-- **ERC-20 Token:** Based on OpenZeppelin's ERC-20 implementation.
-- **Mint and Burn:**
-  - `mint(uint256 amount)`: Mint tokens (owner only).
-  - `burn(uint256 amount)`: Burn tokens (amount > 10 and within balance).
-- **Marketplace:**
-  - Items can be purchased using Degen Tokens.
-  - Items have predefined names and prices.
-- **Ownership:** Only the contract owner can mint tokens or add new items.
+- **Minting**: Tokens can be minted by the contract owner.
+- **Burning**: Users can burn their tokens to reduce the total supply.
+- **Custom Decimals**: Token operates without fractional units (0 decimals).
+- **Transfer**: Users can transfer tokens securely between accounts.
+- **Redemption**: Users can redeem tokens for rewards (e.g., merchandise or in-game items).
+
+## Prerequisites
+
+- Solidity `^0.8.9`
+- OpenZeppelin Contracts
+- Hardhat for local development and testing
+
+## Installation
+
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Compile the contract:
+   ```bash
+   npx hardhat compile
+   ```
 
 ## Contract Overview
 
-- **Token Name:** Degen
-- **Token Symbol:** DGN
-- **Initial Supply:** Defined during deployment.
-- **Default Items:**
-  - Tshirt (20 DGN)
-  - Pants (50 DGN)
-  - Underwear (100 DGN)
+### Constructor
+- Initializes the token with:
+  - **Name**: `Degen`
+  - **Symbol**: `DGN`
+- Sets the token owner.
 
-## Functions
+### Functions
 
-### Token Management
-- `mint(uint256 amount)`: Mint new tokens (owner-only).
-- `burn(uint256 amount)`: Burn tokens from the caller's balance.
+1. **Mint Tokens**
+   - Allows the contract owner to mint tokens.
+   - ```solidity
+     function mint(address to, uint256 amount) public onlyOwner
+     ```
 
-### Marketplace
-- `addItem(string memory name, uint256 price)`: Add a new item (owner-only).
-- `getItem(uint256 index)`: Retrieve details of an item by index.
-- `buyItem(uint256 itemIndex)`: Purchase an item by burning tokens equal to the item's price.
+2. **Burn Tokens**
+   - Enables users to burn their own tokens.
+   - ```solidity
+     function burnTokens(uint256 _value) external
+     ```
 
-### Events
-- `ItemPurchased(address buyer, string itemName, uint256 itemPrice)`: Emitted when an item is purchased.
+3. **Transfer Tokens**
+   - Allows users to transfer tokens to another address.
+   - ```solidity
+     function transferTokens(address _receiver, uint256 _value) external
+     ```
 
-## How to Use
+4. **Redeem Tokens**
+   - Users can redeem tokens for rewards:
+     - 10 tokens: Redeem merchandise from Catizens partnership.
+     - 5 tokens: Redeem merchandise from Telegram Games collaboration.
+   - ```solidity
+     function redeemTokens(uint8 input) external payable returns (bool)
+     ```
 
-1. **Deployment:**
-   - Deploy the contract with an initial supply of tokens.
-   
-2. **Minting:**
-   - Use `mint` to add new tokens to the owner's balance.
+5. **Get Balance**
+   - Retrieves the token balance of the caller.
+   - ```solidity
+     function getBalance() external view returns (uint256)
+     ```
 
-3. **Buying Items:**
-   - Call `buyItem` with the desired item's index.
-   - Ensure the caller has enough DGN balance.
+### Customization
 
-4. **Burning Tokens:**
-   - Use `burn` to reduce tokens from the caller's balance.
+- **Decimals**: The token uses 0 decimals for simplicity.
+- **Reward System**: Tokens can be redeemed for different rewards based on pre-defined input.
 
-## Dependencies
+## Usage
 
-- [OpenZeppelin Contracts v4.9](https://github.com/OpenZeppelin/openzeppelin-contracts)
+1. Deploy the contract using Hardhat or Remix.
+2. Mint tokens using the `mint` function (owner only).
+3. Users can transfer, redeem, or burn tokens based on their balance.
+
+## Example Workflow
+
+1. **Minting Tokens**
+   ```solidity
+   mint(0xRecipientAddress, 100);
+   ```
+
+2. **Transferring Tokens**
+   ```solidity
+   transferTokens(0xReceiverAddress, 50);
+   ```
+
+3. **Burning Tokens**
+   ```solidity
+   burnTokens(20);
+   ```
+
+4. **Redeeming Tokens**
+   - Input `1` for Catizens rewards (10 tokens required).
+   - Input `2` for Telegram Games rewards (5 tokens required).
+   ```solidity
+   redeemTokens(1);
+   ```
+
+## Security Considerations
+
+- Only the owner can mint tokens.
+- Proper checks ensure users have sufficient balances for transfers, burns, and redemptions.
+- Uses OpenZeppelin's libraries for safe and secure implementation.
 
 ## License
 
-This project is licensed under the [Curt Russel Celeste](https://www.facebook.com/profile.php?id=100069766380432) License.
+This project is licensed under the [Curt Russel Celeste](https://www.facebook.com/profile.php?id=100069766380432).
