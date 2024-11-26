@@ -1,75 +1,64 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.9;
 
-// Import OpenZeppelin's ERC20 and Ownable contracts
-import "@openzeppelin/contracts@4.9/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts@4.9/access/Ownable.sol";
+// Importing OpenZeppelin's ERC20 standard contract, Ownable for access control, and ERC20Burnable for burn functionality
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "hardhat/console.sol";
 
-// DegenToken is an ERC20 token with additional functionality for a marketplace
-contract DegenToken is ERC20, Ownable {
-    // Structure to represent an item in the marketplace
-    struct Item {
-        string name; // Name of the item
-        uint256 price; // Price of the item in Degen tokens
+// DegenToken is an ERC20 token with custom features for a marketplace
+contract DegenToken is ERC20, Ownable, ERC20Burnable {
+    // Constructor to initialize the token name as "Degen" and symbol as "DGN"
+    constructor() ERC20("Degen", "DGN") {}
+
+    // Function to mint new tokens; restricted to the owner
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount); // Calls the internal _mint function to create tokens
     }
 
-    // Array to store all available items in the marketplace
-    Item[] public items;
-
-    // Event emitted when an item is purchased
-    event ItemPurchased(address indexed buyer, string itemName, uint256 itemPrice);
-
-    // Constructor to initialize the token and create default items
-    constructor(uint256 initialSupply) ERC20("Degen", "DGN") {
-        // Mint the initial supply of tokens to the contract deployer
-        _mint(msg.sender, initialSupply);
-
-        // Add default items to the marketplace
-        addItem("Tshirt", 20); // Item at index 0
-        addItem("Pants", 50);  // Item at index 1
-        addItem("Underwear", 100); // Item at index 2
+    // Override to set token decimals to 0 (no fractional units)
+    function decimals() override public pure returns (uint8) {
+        return 0; // DegenToken will not allow fractional values
     }
 
-    // Internal function to add a new item to the marketplace (only callable by the owner)
-    function addItem(string memory name, uint256 price) internal onlyOwner {
-        items.push(Item(name, price)); // Add the item to the items array
+    // Function to get the balance of the caller
+    function getBalance() external view returns (uint256) {
+        return this.balanceOf(msg.sender); // Returns balance of the caller's address
     }
 
-    // Public function to retrieve details of an item by index
-    function getItem(uint256 index) public view returns (string memory name, uint256 price) {
-        require(index < items.length, "Item index out of bounds"); // Ensure index is valid
-        Item storage item = items[index];
-        return (item.name, item.price);
-    }
-
-    // Function to mint additional tokens (only callable by the owner)
-    function mint(uint256 amount) public onlyOwner {
-        _mint(msg.sender, amount);
+    // Function to transfer tokens to a receiver
+    function transferTokens(address _receiver, uint256 _value) external {
+        require(balanceOf(msg.sender) >= _value, "Not enough DGN Tokens"); // Ensure sender has sufficient balance
+        approve(msg.sender, _value); // Approve the transaction
+        transferFrom(msg.sender, _receiver, _value); // Execute transfer
     }
 
     // Function to burn tokens from the caller's balance
-    function burn(uint256 amount) public {
-        require(amount > 10, "Amount should be greater than 10"); // Ensure minimum burn amount
-        require(amount <= balanceOf(msg.sender), "Insufficient balance to burn"); // Check balance
-        _burn(msg.sender, amount); // Burn the tokens
+    function burnTokens(uint256 _value) external {
+        require(balanceOf(msg.sender) >= _value, "Not enough DGN"); // Ensure caller has enough tokens to burn
+        burn(_value); // Burn the specified amount
     }
 
-    // Function to purchase an item using Degen tokens
-    function buyItem(uint256 itemIndex) public {
-        require(itemIndex < items.length, "Item index out of bounds"); // Ensure index is valid
-        Item storage item = items[itemIndex];
-        require(balanceOf(msg.sender) >= item.price, "Insufficient balance to buy item"); // Check balance
-
-        // Burn the tokens equal to the item's price
-        _burn(msg.sender, item.price);
-
-        // Emit an event for the purchase
-        emit ItemPurchased(msg.sender, item.name, item.price);
-    }
-
-    // Override the transfer function to allow token transfers between users
-    function transfer(address to, uint256 amount) public override returns (bool) {
-        _transfer(_msgSender(), to, amount);
-        return true;
+    // Function to redeem tokens for rewards based on input
+    function redeemTokens(uint8 input) external payable returns (bool) {
+        if (input == 1) {
+            // Case 1: Redeem 10 tokens for Degen Merch (Catizens partnership)
+            require(this.balanceOf(msg.sender) >= 10, "Not enough DGN Tokens"); // Check token balance
+            approve(msg.sender, 10); // Approve the token transfer
+            console.log("Degen Merch with Partnership with Catizens's [Redeemed]!"); // Log success message
+            return true;
+        } else if (input == 2) {
+            // Case 2: Redeem 5 tokens for Degen Merch (Telegram Games collaboration)
+            require(this.balanceOf(msg.sender) >= 5, "You do not have enough Degen Tokens"); // Check token balance
+            approve(msg.sender, 5); // Approve the token transfer
+            transferFrom(msg.sender, owner(), 5); // Transfer tokens to the contract owner
+            console.log("Degen Merch with Collaboration with Telegram Games [Redeemed]!"); // Log success message
+            return true;
+        } else {
+            // Invalid input
+            console.log("That is not a valid choice"); // Log invalid input message
+            return true; // Return true but no redemption happens
+        }
     }
 }
